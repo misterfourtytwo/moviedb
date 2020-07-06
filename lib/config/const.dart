@@ -1,3 +1,3 @@
-class Const {
-  static const moviesPerPage = 100;
-}
+// class Const {
+//   static const moviesPerPage = 100;
+// }

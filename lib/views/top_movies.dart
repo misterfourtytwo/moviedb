@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:moviedb/services/tmdb_api.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moviedb/bloc/movies_bloc.dart';
 import 'package:moviedb/models/movie.dart';
 
 class TopMovies extends StatefulWidget {
@@ -11,104 +11,135 @@ class TopMovies extends StatefulWidget {
 }
 
 class _TopMoviesState extends State<TopMovies> {
-  List<Movie> movies;
-  RefreshController _refreshController = RefreshController();
-
-  void _onRefresh() async {
-    print('on refresh ');
-
-    // monitor network fetch
-    // await Future.delayed(Duration(milliseconds: 1000));
-    // if failed,use refreshFailed()
-    movies.addAll(await api.loadNextTopPage());
-    if (mounted) setState(() {});
-    _refreshController.refreshCompleted();
-  }
-
-  // void _onLoading() async {
-  //   print('on loading');
-  //   // monitor network fetch
-  //   await Future.delayed(Duration(milliseconds: 1000));
-  //   // if failed,use loadFailed(),if no data return,use LoadNodata()
-  //   if (mounted) setState(() {});
-  //   _refreshController.loadComplete();
-  // }
-
-  TmdbApi api;
-
+  MoviesBloc moviesBloc;
   @override
   void initState() {
     super.initState();
-    api = TmdbApi();
-    movies = [];
+    moviesBloc = BlocProvider.of<MoviesBloc>(context)..add(AppStarted());
   }
+
+  // @override
+  // void dispose() {
+  // moviesBloc.close();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          'Top movies',
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.access_alarm),
-            onPressed: api.loadConfiguration,
-          ),
-          IconButton(
-            icon: Icon(Icons.alarm_off),
-            onPressed: api.loadNextTopPage,
-          ),
-        ],
-      ),
-      body: SmartRefresher(
-        controller: _refreshController,
-        onRefresh: _onRefresh,
-        // onLoading: _onLoading,
-        // header: SliverToBoxAdapter(
-        //   child: Container(
-        //     height: 100,
-        //     color: Colors.pink,
-        //     padding: EdgeInsets.all(8),
-        //     child: Text('header'),
-        //   ),
-        // ),
-        // footer: SliverToBoxAdapter(
-        //   child: Container(
-        //     height: 100,
-        //     color: Colors.pink,
-        //     padding: EdgeInsets.all(8),
-        //     child: Text('footer'),
-        //   ),
-        // ),
-        child: movies.length == 0
-            ? Center(
-                child: Text('list is empty'),
-              )
-            : ListView.builder(
-                itemCount: movies.length,
-                itemBuilder: (context, i) => Column(
-                  children: [
-                    ListTile(
-                      dense: true,
-                      onTap: () => Navigator.of(context)
-                          .pushNamed('movie_info', arguments: movies[i]),
-                      title: Text(movies[i].title,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          )),
-                      trailing:
-                          Text('Score: ' + movies[i].voteAverage.toString()),
-                      leading:
-                          Text(movies[i].releaseDate?.year.toString() ?? ''),
-                    ),
-                    Divider(),
-                  ],
-                ),
+    return BlocBuilder<MoviesBloc, MoviesState>(builder: (context, state) {
+      final Widget offlineToggleButton =
+          ToggleOfflineButton(moviesBloc: moviesBloc, state: state);
+      Widget content;
+      if (state is MoviesInitial ||
+          state is MoviesLoading ||
+          state is CacheLoading) {
+        // loading
+        content = Center(child: CircularProgressIndicator());
+      } else if (state is MoviesError) {
+        //error
+        content = Container(
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Text(
+                'Error:',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-      ),
-    );
+              Text(state.message),
+              RaisedButton(
+                child: Text('Reload'),
+                onPressed: () => moviesBloc.add(LoadMovies()),
+              )
+            ],
+          ),
+        );
+      } else {
+        // loaded or updating
+        List<Movie> movies;
+        if (state is MoviesLoaded) movies = state.movies;
+        if (state is CacheLoaded) movies = state.movies;
+        if (state is MoviesUpdating) movies = state.movies;
+
+        if (movies.isEmpty)
+          content = Center(child: Text('Cache is empty'));
+        else {
+          content = Container(
+              child: ListView.builder(
+            itemCount: movies.length + (state is CacheLoaded ? 0 : 1),
+            itemBuilder: (context, i) => i < movies.length
+                // list item
+                ? Column(
+                    children: [
+                      ListTile(
+                        dense: true,
+                        onTap: () => Navigator.of(context)
+                            .pushNamed('movie_info', arguments: movies[i]),
+                        title: Text(movies[i].title,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            )),
+                        trailing:
+                            Text('Score: ' + movies[i].voteAverage.toString()),
+                        leading:
+                            Text(movies[i].releaseDate?.year.toString() ?? ''),
+                      ),
+                      Divider(),
+                    ],
+                  )
+                : (state is MoviesUpdating)
+                    ? Container(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Loading',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ))
+                    :
+                    // download more button
+                    RaisedButton(
+                        color: Colors.red[100],
+                        onPressed: () => moviesBloc.add(LoadMovies()),
+                        child: Container(
+                            padding: EdgeInsets.all(16),
+                            child: Text(
+                              'Load more',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ))),
+          ));
+        }
+      }
+      print('build $state');
+      return Scaffold(
+          appBar: AppBar(
+              centerTitle: true,
+              title: Text(
+                'Top movies',
+              ),
+              actions: [offlineToggleButton]),
+          body: content);
+    });
   }
+}
+
+class ToggleOfflineButton extends StatelessWidget {
+  const ToggleOfflineButton({
+    Key key,
+    @required this.moviesBloc,
+    @required this.state,
+  }) : super(key: key);
+
+  final MoviesBloc moviesBloc;
+  final MoviesState state;
+
+  @override
+  Widget build(BuildContext context) => FlatButton(
+        child: Text(
+          state is CacheLoaded || state is CacheLoading
+              ? 'Go online'
+              : 'Go offline',
+          style: TextStyle(color: Colors.white),
+        ),
+        onPressed: () => moviesBloc.add(ToggleOffline()),
+      );
 }

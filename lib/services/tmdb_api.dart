@@ -11,33 +11,33 @@ class TmdbApi {
   String apiKey;
   String posterBaseUrl;
   List<String> posterSizes;
-  bool loadedConfiguration;
+  bool configurationLoaded;
   int lastLoadedPage;
   int totalPages;
 
   TmdbApi() {
     apiKey = Secrets.apiKey;
-    loadedConfiguration = false;
+    configurationLoaded = false;
     lastLoadedPage = 0;
     totalPages = 1;
   }
 
   loadConfiguration() async {
     final response = await http.get(baseUrl + 'configuration?api_key=$apiKey');
-    if (response.statusCode != 200) throw Exception('Network error');
     Map<String, dynamic> data = jsonDecode(response.body);
     posterBaseUrl = data['images']['base_url'];
     posterSizes = List<String>.from(data['images']['poster_sizes']);
-    print(posterSizes);
-    loadedConfiguration = true;
+    configurationLoaded = true;
   }
 
   String posterUrl(String posterPath, {bool small = true}) {
-    if (!loadedConfiguration) throw Exception('Unitialised');
+    // if (!loadedConfiguration) throw Exception('Unitialised');
     return posterBaseUrl +
         (small ? posterSizes.first : posterSizes.last) +
         posterPath;
   }
+
+  void resetLastTopPage() => lastLoadedPage = 0;
 
   Future<List<Movie>> loadNextTopPage() async =>
       await loadTopPage(lastLoadedPage + 1);
@@ -45,20 +45,14 @@ class TmdbApi {
   Future<List<Movie>> loadTopPage([int page = 1]) async {
     final response =
         await http.get(baseUrl + 'movie/top_rated?api_key=$apiKey&page=$page');
-    if (response.statusCode != 200) throw Exception('Network error');
+    // if (response.statusCode != 200) throw Exception('Network error');
 
     var top = jsonDecode(response.body);
     totalPages = top['total_pages'];
     lastLoadedPage = max(lastLoadedPage, page);
     var results = List.from(top['results']);
-    // print(results.runtimeType);
-    for (int i = 0; i < results.length; i++) {
-      final tmp = Map<String, dynamic>.from(results[i]);
-      // print(tmp);
-      // Map.castFrom(source).values.toList()
-      // tmp.forEach((e) => print(e));
-      results[i] = Movie.fromMap(tmp);
-    }
-    return List<Movie>.from(results);
+    return results
+        .map((e) => Movie.fromMap(Map<String, dynamic>.from(e)))
+        .toList();
   }
 }

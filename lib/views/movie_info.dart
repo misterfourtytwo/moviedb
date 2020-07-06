@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moviedb/bloc/movies_bloc.dart';
 import 'package:moviedb/models/movie.dart';
 
 class MovieInfoView extends StatelessWidget {
@@ -7,6 +9,7 @@ class MovieInfoView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final api = BlocProvider.of<MoviesBloc>(context).moviesApi;
     return Scaffold(
       appBar: AppBar(
         title: Text('Information'),
@@ -16,8 +19,7 @@ class MovieInfoView extends StatelessWidget {
         children: [
           SizedBox(
             width: MediaQuery.of(context).size.width * .4,
-            child: Image.network(
-                'https://image.tmdb.org/t/p/original${movie.posterPath}'),
+            child: Image.network(api.posterUrl(movie.posterPath, small: false)),
           ),
           SizedBox(
             width: MediaQuery.of(context).size.width * .6,
