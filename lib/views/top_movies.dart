@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moviedb/bloc/movies_bloc.dart';
@@ -38,9 +39,11 @@ class _TopMoviesState extends State<TopMovies> {
       } else if (state is MoviesError) {
         //error
         content = Container(
+          padding: EdgeInsets.all(16),
           alignment: Alignment.center,
           child: Column(
             mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Error:',
@@ -72,24 +75,38 @@ class _TopMoviesState extends State<TopMovies> {
                 ? Column(
                     children: [
                       ListTile(
-                        dense: true,
+                        // dense: true,
                         onTap: () => Navigator.of(context)
                             .pushNamed('movie_info', arguments: movies[i]),
+                        leading: Container(
+                          height: 42,
+                          width: 42,
+                          child: CachedNetworkImage(
+                              placeholder: (context, url) => Container(
+                                  alignment: Alignment.center,
+                                  child: CircularProgressIndicator()),
+                              imageUrl:
+                                  moviesBloc.posterUrl(movies[i].posterPath),
+                              errorWidget: (context, _, __) =>
+                                  Icon(Icons.broken_image, size: 42)),
+                        ),
+                        trailing:
+                            Text(movies[i].releaseDate?.year.toString() ?? ''),
                         title: Text(movies[i].title,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             )),
-                        trailing:
-                            Text('Score: ' + movies[i].voteAverage.toString()),
-                        leading:
-                            Text(movies[i].releaseDate?.year.toString() ?? ''),
+                        // trailing:
+                        //     Text('Score: ' + movies[i].voteAverage.toString()),
                       ),
                       Divider(),
                     ],
                   )
                 : (state is MoviesUpdating)
                     ? Container(
+                        alignment: Alignment.center,
+                        color: Colors.red[100],
                         padding: EdgeInsets.all(16),
                         child: Text(
                           'Loading',

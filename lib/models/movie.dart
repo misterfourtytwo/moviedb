@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:moviedb/config/configuration.dart';
+
 class Movie {
   final int id;
   final String title;
@@ -53,16 +55,16 @@ class Movie {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'title': title,
-      'original_title': originalTitle,
-      'overview': overview,
-      'adult': adult,
-      'poster_path': posterPath,
-      'release_date': releaseDate?.millisecondsSinceEpoch,
-      'popularity': popularity,
-      'vote_average': voteAverage,
-      'vote_count': voteCount,
+      Config.moviesColumnId: id,
+      Config.moviesColumnTitle: title,
+      Config.moviesColumnOriginalTitle: originalTitle,
+      Config.moviesColumnOverview: overview,
+      Config.moviesColumnAdult: adult,
+      Config.moviesColumnPosterPath: posterPath,
+      Config.moviesColumnReleaseDate: releaseDate?.toIso8601String(),
+      Config.moviesColumnPopularity: popularity,
+      Config.moviesColumnVoteAverage: voteAverage,
+      Config.moviesColumnVoteCount: voteCount,
     };
   }
 
@@ -70,16 +72,18 @@ class Movie {
     if (map == null) return null;
 
     return Movie(
-      id: map['id'],
-      title: map['title'],
-      originalTitle: map['original_title'],
-      overview: map['overview'],
-      adult: map['adult'],
-      posterPath: map['poster_path'],
-      releaseDate: DateTime.parse(map['release_date']),
-      popularity: map['popularity'],
-      voteAverage: map['vote_average'],
-      voteCount: map['vote_count'],
+      id: map[Config.moviesColumnId],
+      title: map[Config.moviesColumnTitle],
+      originalTitle: map[Config.moviesColumnOriginalTitle],
+      overview: map[Config.moviesColumnOverview],
+      adult: map[Config.moviesColumnAdult] is int
+          ? (map[Config.moviesColumnAdult] == 0 ? false : true)
+          : map[Config.moviesColumnAdult],
+      posterPath: map[Config.moviesColumnPosterPath],
+      releaseDate: DateTime.parse(map[Config.moviesColumnReleaseDate]),
+      popularity: map[Config.moviesColumnPopularity],
+      voteAverage: map[Config.moviesColumnVoteAverage],
+      voteCount: map[Config.moviesColumnVoteCount],
     );
   }
 

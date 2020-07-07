@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
@@ -13,39 +14,44 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
   final TmdbApi moviesApi;
   final sqliteWrapper;
 
+  String posterBaseUrl;
+  List<String> posterSizes;
+  bool configurationLoaded;
+
   MoviesBloc()
       : moviesApi = TmdbApi(),
         sqliteWrapper = SqliteWrapper(),
+        configurationLoaded = false,
         super(MoviesInitial());
 
   @override
   Stream<MoviesState> mapEventToState(
     MoviesEvent event,
   ) async* {
-    print('begin of mapEventToState');
     if (event is AppStarted) {
-      print('app started');
-      if
-          //
-          (false)
-        //  (await sqliteWrapper.startOffline)
+      await sqliteWrapper.init();
+      if (await sqliteWrapper.startOffline())
         add(LoadCache());
       else
         add(LoadMovies());
-
-      print('end app started');
     }
 
     if (event is LoadMovies) {
-      print('load movies');
-
       if (!(state is MoviesLoaded))
         yield MoviesLoading();
       else
         yield MoviesUpdating((state as MoviesLoaded).movies);
 
       try {
-        if (!moviesApi.configurationLoaded) await moviesApi.loadConfiguration();
+        if (!configurationLoaded) {
+          final response = await moviesApi.loadImageConfig();
+          Map<String, dynamic> data = json.decode(response);
+          await sqliteWrapper.saveImageConfig(response);
+          posterBaseUrl = data['images']['base_url'];
+          posterSizes = List<String>.from(data['images']['poster_sizes']);
+          configurationLoaded = true;
+        }
+
         final moviesLoaded = await moviesApi.loadNextTopPage();
         if (state is MoviesLoading)
           yield MoviesLoaded(moviesLoaded);
@@ -59,45 +65,53 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
       } catch (e) {
         yield MoviesError(e.toString());
       }
-      print('end load movies');
     }
 
     if (event is LoadCache) {
-      print('load cache');
+      if (!configurationLoaded) {
+        final response = await sqliteWrapper.loadImageConfig();
+        if (response != null) {
+          Map<String, dynamic> data = json.decode(response);
+          posterBaseUrl = data['images']['base_url'];
+          posterSizes = List<String>.from(data['images']['poster_sizes']);
+        }
+      }
       if (state is MoviesLoaded)
         yield CacheLoaded((state as MoviesLoaded).movies);
       else
         try {
           yield CacheLoading();
-          final movies = List<Movie>();
-          // await sqliteWrapper.loadMovies();
+          final movies = await sqliteWrapper.loadMovies();
           yield CacheLoaded(movies);
         } catch (e) {
           yield MoviesError(e.toString());
         }
-      print('end load cache');
     }
 
     if (event is SaveCache) {
-      print('save cache');
       try {
-        // await sqliteWrapper.saveMovies(event.movies);
+        await sqliteWrapper.saveMovies(event.movies);
       } catch (e) {
         print('sqlite error');
       }
-      print('end save cache');
     }
 
     if (event is ToggleOffline) {
-      print('toggle offline');
       if (state is CacheLoaded || state is CacheLoading) {
         moviesApi.resetLastTopPage();
+        sqliteWrapper.setOffline(false);
         add(LoadMovies());
       } else {
+        sqliteWrapper.setOffline(true);
         add(LoadCache());
       }
-      print('end toggle offline');
     }
-    print('end of mapEventToState');
+  }
+
+  String posterUrl(String posterPath, {bool small = true}) {
+    if (posterSizes?.last == null) return 'foobaarrrr';
+    return posterBaseUrl +
+        (small ? posterSizes.first : posterSizes.last) +
+        posterPath;
   }
 }
