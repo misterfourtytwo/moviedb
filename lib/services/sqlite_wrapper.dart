@@ -3,22 +3,17 @@ import 'package:sqflite/sqflite.dart';
 import 'package:moviedb/models/movie.dart';
 
 class SqliteWrapper {
-  bool initialized = false;
   Database moviesDb;
 
   init() async {
-    print('sqlite init');
     moviesDb = await open(Config.databaseName);
-    print('moviesDb: ' + moviesDb.runtimeType.toString());
-    initialized = true;
-    print('sqlite init end');
   }
 
   Future<Database> open(String path) async {
     return await openDatabase(path, version: 1,
         onCreate: (Database db, int version) async {
       await db.execute('''
-create table ${Config.tableMovies} ( 
+  create table ${Config.tableMovies} ( 
   ${Config.moviesColumnId} integer unique on conflict replace, 
   ${Config.moviesColumnTitle} text not null,
   ${Config.moviesColumnOriginalTitle} text not null,
@@ -31,7 +26,7 @@ create table ${Config.tableMovies} (
   ${Config.moviesColumnVoteCount} integer not null
   )  
 ''');
-      db.execute('''
+      await db.execute('''
   create table ${Config.tableConfig} (
   ${Config.columnParameter} text unique on conflict replace,
   ${Config.columnValue} text
@@ -54,7 +49,7 @@ create table ${Config.tableMovies} (
 
   saveImageConfig(String value) async {
     await moviesDb.insert(Config.tableConfig, {
-      Config.columnParameter: 'start_offline',
+      Config.columnParameter: 'image_config',
       Config.columnValue: value,
     });
   }
@@ -95,13 +90,17 @@ create table ${Config.tableMovies} (
   Future<List<Movie>> loadMovies() async {
     List<Map<String, dynamic>> records =
         await moviesDb.query(Config.tableMovies);
-    return records.map((e) => Movie.fromMap(e)).toList();
+    final result = records.map((e) => Movie.fromMap(e)).toList();
+    result.sort((a, b) => a.popularity.compareTo(b.popularity) == 0
+        ? a.title.compareTo(b.title)
+        : a.popularity.compareTo(b.popularity));
+    return result;
   }
 
   Future<void> saveMovies(List<Movie> movies) async {
     // movies.forEach((e) async => insertMovie(e));
     if (movies != null) {
-      moviesDb.rawDelete('DELETE FROM ${Config.tableMovies}');
+      // moviesDb.rawDelete('DELETE FROM ${Config.tableMovies}');
       var batch = moviesDb.batch();
       movies
           .forEach((movie) => batch.insert(Config.tableMovies, movie.toMap()));

@@ -12,7 +12,7 @@ part 'movies_state.dart';
 
 class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
   final TmdbApi moviesApi;
-  final sqliteWrapper;
+  final SqliteWrapper sqliteWrapper;
 
   String posterBaseUrl;
   List<String> posterSizes;
