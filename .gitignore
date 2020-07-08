@@ -30,7 +30,7 @@
 .pub-cache/
 .pub/
 /build/
-# **/secrets.dart
+**/secrets.dart
 **/linux/
 **/web/
 

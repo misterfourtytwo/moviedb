@@ -20,7 +20,7 @@ class SqliteWrapper {
   ${Config.moviesColumnTitle} text not null,
   ${Config.moviesColumnOriginalTitle} text not null,
   ${Config.moviesColumnOverview} text not null,
-  ${Config.moviesColumnAdult} integer not null,
+  ${Config.moviesColumnAdult} text not null,
   ${Config.moviesColumnPosterPath} text not null,
   ${Config.moviesColumnReleaseDate} text not null,  
   ${Config.moviesColumnPopularity} real not null,

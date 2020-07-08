@@ -59,7 +59,7 @@ class Movie {
       Config.moviesColumnTitle: title,
       Config.moviesColumnOriginalTitle: originalTitle,
       Config.moviesColumnOverview: overview,
-      Config.moviesColumnAdult: adult,
+      Config.moviesColumnAdult: adult.toString(),
       Config.moviesColumnPosterPath: posterPath,
       Config.moviesColumnReleaseDate: releaseDate?.toIso8601String(),
       Config.moviesColumnPopularity: popularity,
@@ -76,9 +76,9 @@ class Movie {
       title: map[Config.moviesColumnTitle],
       originalTitle: map[Config.moviesColumnOriginalTitle],
       overview: map[Config.moviesColumnOverview],
-      adult: map[Config.moviesColumnAdult] is int
-          ? (map[Config.moviesColumnAdult] == 0 ? false : true)
-          : map[Config.moviesColumnAdult],
+      adult: map[Config.moviesColumnAdult] is bool
+          ? map[Config.moviesColumnAdult]
+          : (map[Config.moviesColumnAdult] == 'true' ? true : false),
       posterPath: map[Config.moviesColumnPosterPath],
       releaseDate: DateTime.parse(map[Config.moviesColumnReleaseDate]),
       popularity: map[Config.moviesColumnPopularity],
