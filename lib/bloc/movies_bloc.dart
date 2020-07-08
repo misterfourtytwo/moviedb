@@ -30,7 +30,7 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
   ) async* {
     if (event is AppStarted) {
       await sqliteWrapper.init();
-      if (await sqliteWrapper.startOffline())
+      if (await sqliteWrapper.startOfflineFlag())
         add(LoadCache());
       else
         add(LoadMovies());
@@ -99,17 +99,19 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
     if (event is ToggleOffline) {
       if (state is CacheLoaded || state is CacheLoading) {
         moviesApi.resetLastTopPage();
-        sqliteWrapper.setOffline(false);
+        sqliteWrapper.setOfflineFlag(false);
         add(LoadMovies());
       } else {
-        sqliteWrapper.setOffline(true);
+        sqliteWrapper.setOfflineFlag(true);
         add(LoadCache());
       }
     }
   }
 
   String posterUrl(String posterPath, {bool small = true}) {
-    if (posterSizes?.last == null) return 'foobaarrrr';
+    // simply return wrong url and show broken image when we have no image
+    // configuration saved
+    if (posterSizes?.last == null) return 'aaaaaaaaaaaaaaaaaaaaa';
     return posterBaseUrl +
         (small ? posterSizes.first : posterSizes.last) +
         posterPath;

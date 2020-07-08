@@ -1,5 +1,5 @@
 class Config {
-  static const databaseName = './tmdb_db.db';
+  static const databaseName = 'tmdb_db.db';
 
   static const tableConfig = 'config';
   static const columnParameter = 'param';

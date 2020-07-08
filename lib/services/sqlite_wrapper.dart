@@ -1,12 +1,14 @@
-import 'package:moviedb/config/configuration.dart';
+import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+
+import 'package:moviedb/config/configuration.dart';
 import 'package:moviedb/models/movie.dart';
 
 class SqliteWrapper {
   Database moviesDb;
 
   init() async {
-    moviesDb = await open(Config.databaseName);
+    moviesDb = await open(join(await getDatabasesPath(), Config.databaseName));
   }
 
   Future<Database> open(String path) async {
@@ -14,7 +16,7 @@ class SqliteWrapper {
         onCreate: (Database db, int version) async {
       await db.execute('''
   create table ${Config.tableMovies} ( 
-  ${Config.moviesColumnId} integer unique on conflict replace, 
+  ${Config.moviesColumnId} integer primary key, 
   ${Config.moviesColumnTitle} text not null,
   ${Config.moviesColumnOriginalTitle} text not null,
   ${Config.moviesColumnOverview} text not null,
@@ -28,7 +30,7 @@ class SqliteWrapper {
 ''');
       await db.execute('''
   create table ${Config.tableConfig} (
-  ${Config.columnParameter} text unique on conflict replace,
+  ${Config.columnParameter} text primary key,
   ${Config.columnValue} text
   );
   ''');
@@ -48,13 +50,17 @@ class SqliteWrapper {
   }
 
   saveImageConfig(String value) async {
-    await moviesDb.insert(Config.tableConfig, {
-      Config.columnParameter: 'image_config',
-      Config.columnValue: value,
-    });
+    await moviesDb.insert(
+      Config.tableConfig,
+      {
+        Config.columnParameter: 'image_config',
+        Config.columnValue: value,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  Future<bool> startOffline() async {
+  Future<bool> startOfflineFlag() async {
     List<Map> maps = await moviesDb.query(
       Config.tableConfig,
       where: '${Config.columnParameter} = ?',
@@ -67,11 +73,15 @@ class SqliteWrapper {
     return false;
   }
 
-  setOffline(bool value) async {
-    await moviesDb.insert(Config.tableConfig, {
-      Config.columnParameter: 'start_offline',
-      Config.columnValue: value.toString()
-    });
+  setOfflineFlag(bool value) async {
+    await moviesDb.insert(
+      Config.tableConfig,
+      {
+        Config.columnParameter: 'start_offline',
+        Config.columnValue: value.toString()
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   void insertMovie(Movie movie) async {
@@ -91,9 +101,10 @@ class SqliteWrapper {
     List<Map<String, dynamic>> records =
         await moviesDb.query(Config.tableMovies);
     final result = records.map((e) => Movie.fromMap(e)).toList();
-    result.sort((a, b) => a.popularity.compareTo(b.popularity) == 0
+    // sort by rating
+    result.sort((a, b) => a.voteAverage.compareTo(b.voteAverage) == 0
         ? a.title.compareTo(b.title)
-        : a.popularity.compareTo(b.popularity));
+        : a.voteAverage.compareTo(b.voteAverage));
     return result;
   }
 
@@ -102,8 +113,11 @@ class SqliteWrapper {
     if (movies != null) {
       // moviesDb.rawDelete('DELETE FROM ${Config.tableMovies}');
       var batch = moviesDb.batch();
-      movies
-          .forEach((movie) => batch.insert(Config.tableMovies, movie.toMap()));
+      movies.forEach((movie) => batch.insert(
+            Config.tableMovies,
+            movie.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          ));
       await batch.commit(noResult: true);
     }
   }

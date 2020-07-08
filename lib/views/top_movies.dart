@@ -90,15 +90,13 @@ class _TopMoviesState extends State<TopMovies> {
                               errorWidget: (context, _, __) =>
                                   Icon(Icons.broken_image, size: 42)),
                         ),
-                        trailing:
-                            Text(movies[i].releaseDate?.year.toString() ?? ''),
                         title: Text(movies[i].title,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             )),
-                        // trailing:
-                        //     Text('Score: ' + movies[i].voteAverage.toString()),
+                        trailing:
+                            Text(movies[i].releaseDate?.year.toString() ?? ''),
                       ),
                       Divider(),
                     ],
@@ -126,7 +124,7 @@ class _TopMoviesState extends State<TopMovies> {
           ));
         }
       }
-      print('build $state');
+      // print('build $state');
       return Scaffold(
           appBar: AppBar(
               centerTitle: true,

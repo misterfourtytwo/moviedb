@@ -13,7 +13,7 @@ class MovieInfoView extends StatelessWidget {
     // final api = BlocProvider.of<MoviesBloc>(context).moviesApi;
     return Scaffold(
         appBar: AppBar(
-          title: Text('Information'),
+          title: Text('Movie details'),
         ),
         body: LayoutBuilder(builder: (context, size) {
           bool horizontal = size.biggest.width > size.biggest.height ||
