@@ -81,7 +81,7 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
       else
         try {
           yield CacheLoading();
-          final movies = await sqliteWrapper.loadMovies();
+          var movies = await sqliteWrapper.loadMovies();
           yield CacheLoaded(movies);
         } catch (e) {
           yield MoviesError(e.toString());
