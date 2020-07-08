@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
+
 import 'package:moviedb/models/movie.dart';
 import 'package:moviedb/services/sqlite_wrapper.dart';
 import 'package:moviedb/services/tmdb_api.dart';

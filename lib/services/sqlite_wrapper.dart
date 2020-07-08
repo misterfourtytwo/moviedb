@@ -101,8 +101,8 @@ class SqliteWrapper {
     List<Map<String, dynamic>> records =
         await moviesDb.query(Config.tableMovies);
     final result = records.map((e) => Movie.fromMap(e)).toList();
-    // sort by rating
-    result.sort((a, b) => a.voteAverage.compareTo(b.voteAverage) == 0
+    // sort by rating, desc
+    result.sort((a, b) => -1 * a.voteAverage.compareTo(b.voteAverage) == 0
         ? a.title.compareTo(b.title)
         : a.voteAverage.compareTo(b.voteAverage));
     return result;

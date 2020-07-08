@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import 'package:moviedb/config/secrets.dart';
 import 'package:moviedb/models/movie.dart';
 
