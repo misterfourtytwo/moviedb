@@ -60,7 +60,7 @@ class SqliteWrapper {
     );
   }
 
-  Future<bool> startOfflineFlag() async {
+  Future<bool> loadOfflineFlag() async {
     List<Map> maps = await moviesDb.query(
       Config.tableConfig,
       where: '${Config.columnParameter} = ?',
@@ -102,9 +102,11 @@ class SqliteWrapper {
         await moviesDb.query(Config.tableMovies);
     final result = records.map((e) => Movie.fromMap(e)).toList();
     // sort by rating, desc
-    result.sort((a, b) => -1 * a.voteAverage.compareTo(b.voteAverage) == 0
-        ? a.title.compareTo(b.title)
-        : a.voteAverage.compareTo(b.voteAverage));
+    result.sort((a, b) =>
+        -1 *
+        (a.voteAverage.compareTo(b.voteAverage) == 0
+            ? a.title.compareTo(b.title)
+            : a.voteAverage.compareTo(b.voteAverage)));
     return result;
   }
 

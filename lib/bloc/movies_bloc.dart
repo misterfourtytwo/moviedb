@@ -31,7 +31,7 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
   ) async* {
     if (event is AppStarted) {
       await sqliteWrapper.init();
-      if (await sqliteWrapper.startOfflineFlag())
+      if (await sqliteWrapper.loadOfflineFlag())
         add(LoadCache());
       else
         add(LoadMovies());
@@ -54,6 +54,7 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
         }
 
         final moviesLoaded = await moviesApi.loadNextTopPage();
+
         if (state is MoviesLoading)
           yield MoviesLoaded(moviesLoaded);
         else if (state is MoviesUpdating) {

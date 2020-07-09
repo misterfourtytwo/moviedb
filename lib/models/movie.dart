@@ -15,12 +15,12 @@ class Movie {
   final int voteCount;
 
   Movie({
-    this.id = 424242,
-    this.title = 'Foo',
+    this.id,
+    this.title,
     this.originalTitle,
-    this.overview = 'Bar',
+    this.overview,
     this.adult,
-    this.posterPath = 'someUrl',
+    this.posterPath,
     this.releaseDate,
     this.popularity,
     this.voteAverage,
@@ -62,8 +62,8 @@ class Movie {
       Config.moviesColumnAdult: adult.toString(),
       Config.moviesColumnPosterPath: posterPath,
       Config.moviesColumnReleaseDate: releaseDate?.toIso8601String(),
-      Config.moviesColumnPopularity: popularity,
-      Config.moviesColumnVoteAverage: voteAverage,
+      Config.moviesColumnPopularity: popularity.toDouble(),
+      Config.moviesColumnVoteAverage: voteAverage.toDouble(),
       Config.moviesColumnVoteCount: voteCount,
     };
   }
@@ -76,13 +76,11 @@ class Movie {
       title: map[Config.moviesColumnTitle],
       originalTitle: map[Config.moviesColumnOriginalTitle],
       overview: map[Config.moviesColumnOverview],
-      adult: map[Config.moviesColumnAdult] is bool
-          ? map[Config.moviesColumnAdult]
-          : (map[Config.moviesColumnAdult] == 'true' ? true : false),
+      adult: map[Config.moviesColumnAdult]?.toString() == 'true' ? true : false,
       posterPath: map[Config.moviesColumnPosterPath],
       releaseDate: DateTime.parse(map[Config.moviesColumnReleaseDate]),
-      popularity: map[Config.moviesColumnPopularity],
-      voteAverage: map[Config.moviesColumnVoteAverage],
+      popularity: map[Config.moviesColumnPopularity] + 0.0,
+      voteAverage: map[Config.moviesColumnVoteAverage] + 0.0,
       voteCount: map[Config.moviesColumnVoteCount],
     );
   }

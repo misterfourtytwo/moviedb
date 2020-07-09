@@ -34,6 +34,8 @@ class TmdbApi {
   Future<List<Movie>> loadTopPage([int page = 1]) async {
     final response =
         await http.get(baseUrl + 'movie/top_rated?api_key=$apiKey&page=$page');
+    // print('got api response');
+
     // final body = jsonDecode(response.body).cast<Map<String, dynamic>>();
     // totalPages = body['total_pages'];
     lastLoadedPage = max(lastLoadedPage, page);
@@ -42,6 +44,7 @@ class TmdbApi {
 }
 
 List<Movie> parseMoviesPage(String responseBody) {
+  // print('decoding json');
   var results = List.from(json.decode(responseBody)['results']);
   return results
       .map((e) => Movie.fromMap(Map<String, dynamic>.from(e)))
